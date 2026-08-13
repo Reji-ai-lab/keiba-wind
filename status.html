@@ -6,7 +6,8 @@ body{background:#f4f6f8;color:#0d1b2a;font-family:'MPlusRounded','Hiragino Kaku 
 .top{border-bottom:2px solid #00b894;padding-bottom:10px;margin-bottom:16px}
 .brand{font-size:30px;font-weight:800;letter-spacing:.16em;color:#00866e;line-height:1.05}
 h1{font-size:18px;margin:5px 0 2px;font-weight:800}.dt{font-size:14px;color:#8899aa}
-.card{background:#fff;border:1px solid #dfe6ec;border-radius:12px;padding:15px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #dfe6ec;border-radius:12px;padding:15px;margin-bottom:26px;box-shadow:0 2px 8px rgba(60,90,110,.06)}
+.card+.card{position:relative}.card+.card::before{content:"";position:absolute;left:28%;right:28%;top:-14px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#cfdbe2,transparent)}
 .ch{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:10px;border-bottom:1px solid #eef1f0;padding-bottom:8px}
 .ch .nm{font-size:18px;font-weight:800;color:#00866e}
 .lk{font-size:10.5px;font-weight:700;color:#00866e;text-decoration:none;margin-left:8px}
@@ -20,11 +21,11 @@ h1{font-size:18px;margin:5px 0 2px;font-weight:800}.dt{font-size:14px;color:#889
 .gtag{position:absolute;top:-8px;left:9px;font-size:9px;font-weight:800;padding:1px 7px;border-radius:6px;color:#fff}
 .grp.turf .gtag{background:#3d8ea3}.grp.dirt .gtag{background:#b58a4a}
 .gau{margin-bottom:8px}.gau:last-child{margin-bottom:0}
-.gl{font-size:11.5px;color:#3f5f7a;font-weight:700;display:flex;justify-content:space-between;margin-bottom:3px}.gl b{color:#0d1b2a;font-size:15.5px}
+.gl{font-size:11.5px;color:#5c7a99;font-weight:700;display:flex;justify-content:space-between;margin-bottom:3px}.gl b{color:#4d6884;font-size:15.5px}
 .gbar{position:relative;height:10px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(13,27,42,.06)}
-.gm{position:absolute;top:50%;width:3px;height:16px;background:#0d1b2a;border-radius:2px;transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff}
-.ge{display:flex;justify-content:space-between;font-size:9px;color:#8a9bb0;margin-top:2px}
-.mini{font-size:12.5px;color:#5c7a99;margin-top:6px}.mini b{color:#1b2d45;font-weight:700;font-size:14.5px}
+.gm{position:absolute;top:50%;width:3px;height:16px;background:#6f89a5;border-radius:2px;transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff}
+.ge{display:flex;justify-content:space-between;font-size:9px;color:#9aa9bb;margin-top:2px}
+.mini{font-size:12.5px;color:#5c7a99;margin-top:6px}.mini b{color:#4d6884;font-weight:700;font-size:14.5px}
 .mini .mk{color:#6b7d92;font-size:10.5px;font-weight:700;margin-right:4px}.mini .mk~.mk{margin-left:10px}
 .mini b+.mk{margin-left:10px}
 .speed{display:flex;align-items:center;gap:8px;row-gap:5px;flex-wrap:wrap;margin:13px 0 3px;padding:10px 12px;
@@ -130,7 +131,7 @@ const _cvs=[...document.querySelectorAll(".trk")];
 const _red=matchMedia("(prefers-reduced-motion:reduce)").matches;
 function loop(){const el=performance.now()/1000;_cvs.forEach(cv=>draw(cv,el));if(!_red)requestAnimationFrame(loop);}
 loop();addEventListener("load",loop);
-function fitMi(){document.querySelectorAll(".card").forEach(card=>{const mis=[...card.querySelectorAll(".mi")];if(!mis.length)return;let min=10.5;mis.forEach(e=>{e.style.fontSize="";let fs=10.5;for(let n=0;n<12&&e.scrollWidth>e.clientWidth+1&&fs>7.5;n++){fs-=0.3;e.style.fontSize=fs.toFixed(1)+"px";}if(fs<min)min=fs;});mis.forEach(e=>e.style.fontSize=min.toFixed(1)+"px");});}
+function fitMi(){const mis=[...document.querySelectorAll(".mi")];if(!mis.length)return;let min=10.5;mis.forEach(e=>{e.style.fontSize="";let fs=10.5;for(let n=0;n<12&&e.scrollWidth>e.clientWidth+1&&fs>7.5;n++){fs-=0.3;e.style.fontSize=fs.toFixed(1)+"px";}if(fs<min)min=fs;});mis.forEach(e=>e.style.fontSize=min.toFixed(1)+"px");}
 fitMi();addEventListener("load",fitMi);
 addEventListener("resize",()=>{const el=performance.now()/1000;_cvs.forEach(cv=>draw(cv,el));fitMi();});
 </script></body></html>
