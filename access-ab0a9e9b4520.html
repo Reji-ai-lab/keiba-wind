@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>HATAKE アクセス集計（関係者専用）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f4f6f8;color:#33383d;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;font-feature-settings:"palt"1;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:26px 16px 60px}
+.head{text-align:center;border-bottom:2px solid #2f7d2b;padding-bottom:14px;margin-bottom:18px}
+.brand{font-size:40px;font-weight:900;letter-spacing:4px;color:#2f7d2b;line-height:1}
+.head h1{font-size:14px;font-weight:700;color:#6f7d74;margin-top:8px}
+.head .lock{display:inline-block;margin-top:6px;font-size:10.5px;font-weight:800;letter-spacing:.12em;color:#8a5a2b;background:#f6efe6;border:1px solid #e6d5bf;border-radius:20px;padding:3px 11px}
+.total{background:#2f7d2b;color:#fff;border-radius:14px;padding:20px 18px;text-align:center;margin-bottom:16px;box-shadow:0 3px 10px rgba(47,125,43,.22)}
+.total .k{font-size:11px;font-weight:700;opacity:.85;letter-spacing:.1em}
+.total .v{font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+.total .v small{font-size:16px;font-weight:700;opacity:.85;margin-left:3px}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+.card{background:#fff;border:1px solid #e4e8ec;border-left:4px solid #e5811f;border-radius:11px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(30,40,50,.05)}
+.card.c-condition{border-left-color:#2f7d2b}.card.c-race{border-left-color:#8a5a2b}
+.card .lab{font-size:13px;font-weight:800;color:#33383d}
+.card .lab small{display:block;font-size:10px;font-weight:600;color:#8b9198;margin-top:2px;letter-spacing:.02em}
+.card .num{font-size:30px;font-weight:900;color:#256321;font-variant-numeric:tabular-nums}
+.card .num small{font-size:12px;font-weight:700;color:#8b9198;margin-left:2px}
+.card.c-condition .num{color:#2f7d2b}.card.c-race .num{color:#8a5a2b}
+.bar{display:flex;align-items:center;gap:10px;margin-top:18px;justify-content:center}
+.bar button{font-size:12px;font-weight:800;color:#2f7d2b;background:#eef7ec;border:1.5px solid #2f7d2b;border-radius:20px;padding:7px 16px;cursor:pointer}
+.bar button:hover{background:#2f7d2b;color:#fff}
+.bar .upd{font-size:11px;color:#9aa7a0}
+.note{font-size:10.5px;color:#b0b6bc;line-height:1.9;margin-top:20px;text-align:center}
+.err{display:none;text-align:center;color:#c0392b;font-size:12px;margin-top:14px}
+.pulse{animation:pl .8s ease}@keyframes pl{0%{opacity:.35}100%{opacity:1}}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="brand">HATAKE</div>
+    <h1>アクセス集計</h1>
+    <div class="lock">🔒 関係者専用</div>
+  </div>
+  <div class="total"><div class="k">総アクセス数（累計）</div><div class="v"><span id="t-total">…</span><small>PV</small></div></div>
+  <div class="grid">
+    <div class="card c-index"><div class="lab">トップ（カルテ探索）<small>index</small></div><div class="num"><span id="t-index">…</span><small>PV</small></div></div>
+    <div class="card c-condition"><div class="lab">本日のコンディション<small>condition</small></div><div class="num"><span id="t-condition">…</span><small>PV</small></div></div>
+    <div class="card c-race"><div class="lab">本日の傾向（レース別）<small>race</small></div><div class="num"><span id="t-race">…</span><small>PV</small></div></div>
+  </div>
+  <div class="bar"><button id="rf" onclick="load()">↻ 更新</button><span class="upd" id="upd"></span></div>
+  <div class="err" id="err">取得に失敗しました。時間をおいて再度お試しください。</div>
+  <div class="note">累計PV（ページ表示回数）。<br>各ページに <code>?me=1</code> を一度付けて開くと、その端末は以後カウント対象外になります。</div>
+</div>
+<script>
+var NS='hatakeb7aff469c2', KEYS=['index','condition','race'];
+function get(k){return fetch('https://abacus.jasoncameron.dev/get/'+NS+'/'+k).then(function(r){return r.json();}).then(function(j){return (j&&typeof j.value==='number')?j.value:0;}).catch(function(){return null;});}
+function fmt(n){return n.toLocaleString('ja-JP');}
+function load(){
+  document.getElementById('err').style.display='none';
+  Promise.all(KEYS.map(get)).then(function(vals){
+    if(vals.some(function(v){return v===null;})){document.getElementById('err').style.display='block';}
+    var total=0;
+    KEYS.forEach(function(k,i){var v=vals[i]||0;total+=v;var el=document.getElementById('t-'+k);el.textContent=fmt(v);el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse');});
+    var te=document.getElementById('t-total');te.textContent=fmt(total);te.classList.remove('pulse');void te.offsetWidth;te.classList.add('pulse');
+    var d=new Date();document.getElementById('upd').textContent='最終更新 '+d.getHours()+':'+('0'+d.getMinutes()).slice(-2);
+  });
+}
+load();
+setInterval(load,30000);
+</script>
+</body></html>
