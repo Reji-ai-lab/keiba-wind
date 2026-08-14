@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HATAKE コース起伏プロファイル 3D</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#faf8f3;font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',Meiryo,sans-serif;color:#33383d;overflow:hidden}
+#hud{position:fixed;top:12px;left:12px;z-index:10;background:rgba(255,255,255,.93);border:1px solid #e4e8ec;border-radius:12px;padding:12px 14px;box-shadow:0 3px 12px rgba(60,90,110,.12);max-width:290px}
+#hud h1{font-size:14px;color:#2f7d2b;font-weight:800;letter-spacing:.08em}
+#hud .m{font-size:11.5px;font-weight:700;margin:5px 0 9px}
+#hud select{width:100%;padding:8px;border:1px solid #dfe6ec;border-radius:8px;font-size:13px;font-weight:700;color:#33383d;background:#fff}
+#hud label{display:block;font-size:10.5px;color:#8b9198;font-weight:700;margin:11px 0 3px}
+#hud input[type=range]{width:100%}
+#hud .lg{display:flex;gap:12px;margin-top:9px;font-size:10.5px;font-weight:700}
+#hud .lg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+#hud .tip{font-size:10px;color:#b0b6bc;margin-top:9px;line-height:1.7}
+#cv{position:fixed;inset:0}
+</style></head><body>
+<div id="hud">
+  <h1>HATAKE コース起伏プロファイル 3D</h1>
+  <div class="m" id="meta"></div>
+  <select id="sel"></select>
+  <label>縦の誇張 <span id="exv"></span>×</label>
+  <input type="range" id="ex" min="2" max="20" step="1" value="8">
+  <div class="lg"><span><i style="background:#2f7d2b"></i>芝</span><span><i style="background:#8a5a2b"></i>ダート</span><span><i style="background:#2f7d2b"></i>S発走</span><span><i style="background:#e5811f"></i>Gゴール</span></div>
+  <div class="tip">ドラッグ＝回転／ホイール＝ズーム／右ドラッグ＝移動。縦は視認性のため誇張表示。JRA公式データに基づく／HATAKE独自作図（外部画像不使用）。</div>
+</div>
+<canvas id="cv"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
+<script>
+var PROFILES = {"新潟(内)": {"dist": 1400, "straight": 358.7, "kotei": 0.8, "surface": "芝", "points": [[1400, 0.0], [1200, 0.3], [1000, 0.6], [800, 0.75], [650, 0.65], [500, 0.45], [400, 0.25], [358.7, 0.15], [200, 0.05], [0, 0.0]], "title": "新潟(内)・芝 ｜ コース起伏プロファイル"}, "新潟(外)": {"dist": 2000, "straight": 658.7, "kotei": 2.2, "surface": "芝", "points": [[2000, 0.4], [1700, 0.9], [1400, 1.6], [1100, 2.0], [900, 2.1], [750, 1.9], [658.7, 1.0], [500, 0.4], [250, 0.1], [0, 0.0]], "title": "新潟(外)・芝 ｜ コース起伏プロファイル"}, "東京": {"dist": 2000, "straight": 525.9, "kotei": 2.7, "surface": "芝", "points": [[2000, 1.2], [1750, 2.2], [1550, 2.6], [1300, 2.0], [1000, 1.2], [800, 0.8], [600, 0.6], [525.9, 0.5], [300, 1.4], [120, 2.0], [0, 1.5]], "title": "東京・芝 ｜ コース起伏プロファイル"}, "中山": {"dist": 2000, "straight": 310, "kotei": 5.3, "surface": "芝", "points": [[2000, 2.6], [1800, 4.2], [1600, 5.0], [1400, 4.4], [1150, 2.6], [900, 1.2], [700, 0.6], [500, 0.3], [310, 0.2], [180, 2.4], [60, 3.0], [0, 2.2]], "title": "中山・芝 ｜ コース起伏プロファイル"}, "中京": {"dist": 2000, "straight": 412.5, "kotei": 3.5, "surface": "芝", "points": [[2000, 2.0], [1750, 2.6], [1500, 3.0], [1250, 2.2], [950, 1.2], [700, 0.6], [500, 0.4], [412.5, 0.4], [230, 2.2], [90, 2.8], [0, 2.0]], "title": "中京・芝 ｜ コース起伏プロファイル"}, "京都(外)": {"dist": 2200, "straight": 403.7, "kotei": 4.3, "surface": "芝", "points": [[2200, 1.0], [1900, 1.6], [1650, 2.2], [1400, 3.6], [1250, 4.0], [1100, 3.5], [950, 2.0], [750, 0.9], [550, 0.4], [403.7, 0.2], [200, 0.1], [0, 0.0]], "title": "京都(外)・芝 ｜ コース起伏プロファイル"}, "阪神(内)": {"dist": 2000, "straight": 356.5, "kotei": 1.9, "surface": "芝", "points": [[2000, 1.0], [1750, 1.4], [1500, 1.6], [1250, 1.3], [1000, 0.9], [750, 0.6], [550, 0.4], [356.5, 0.3], [200, 1.4], [70, 1.8], [0, 1.2]], "title": "阪神(内)・芝 ｜ コース起伏プロファイル"}, "阪神(外)": {"dist": 2400, "straight": 473.6, "kotei": 2.4, "surface": "芝", "points": [[2400, 1.1], [2100, 1.7], [1800, 2.2], [1500, 1.9], [1200, 1.2], [900, 0.8], [650, 0.5], [473.6, 0.4], [250, 1.6], [90, 2.2], [0, 1.5]], "title": "阪神(外)・芝 ｜ コース起伏プロファイル"}, "福島": {"dist": 2000, "straight": 292, "kotei": 1.9, "surface": "芝", "points": [[2000, 0.6], [1750, 1.2], [1500, 1.7], [1250, 1.9], [1000, 1.5], [750, 0.9], [500, 0.5], [292, 0.3], [150, 0.2], [0, 0.1]], "title": "福島・芝 ｜ コース起伏プロファイル"}, "小倉": {"dist": 2000, "straight": 293, "kotei": 3.0, "surface": "芝", "points": [[2000, 1.2], [1750, 2.2], [1500, 2.9], [1250, 2.6], [1000, 1.8], [700, 0.9], [500, 0.5], [293, 0.3], [150, 0.2], [0, 0.0]], "title": "小倉・芝 ｜ コース起伏プロファイル"}, "札幌": {"dist": 2000, "straight": 262.1, "kotei": 0.7, "surface": "芝", "points": [[2000, 0.2], [1700, 0.4], [1400, 0.6], [1100, 0.65], [850, 0.55], [600, 0.4], [400, 0.25], [262.1, 0.15], [120, 0.05], [0, 0.0]], "title": "札幌・芝 ｜ コース起伏プロファイル"}, "函館": {"dist": 2000, "straight": 262.1, "kotei": 3.5, "surface": "芝", "points": [[2000, 0.6], [1750, 1.4], [1500, 2.6], [1300, 3.4], [1100, 3.0], [900, 2.0], [650, 1.0], [400, 0.5], [262.1, 0.3], [120, 0.15], [0, 0.0]], "title": "函館・芝 ｜ コース起伏プロファイル"}, "東京ダ": {"dist": 1600, "straight": 501.6, "kotei": 2.5, "surface": "ダート", "points": [[1600, 1.4], [1400, 2.0], [1200, 2.4], [1000, 1.9], [800, 1.3], [650, 0.9], [501.6, 0.6], [300, 1.4], [120, 2.0], [0, 1.5]], "title": "東京ダ・ダート ｜ コース起伏プロファイル"}, "中山ダ": {"dist": 1800, "straight": 308, "kotei": 4.5, "surface": "ダート", "points": [[1800, 3.6], [1600, 4.4], [1400, 3.8], [1150, 2.4], [900, 1.3], [700, 0.7], [500, 0.4], [308, 0.3], [180, 2.2], [60, 2.7], [0, 2.0]], "title": "中山ダ・ダート ｜ コース起伏プロファイル"}};
+var renderer,scene,camera,controls,trackGroup,EX=8;
+function init(){
+  var cv=document.getElementById('cv');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(innerWidth,innerHeight); renderer.setClearColor(0xffffff,1);
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,2000); camera.position.set(0,150,260);
+  controls=new THREE.OrbitControls(camera,cv); controls.enableDamping=true; controls.dampingFactor=0.08; controls.target.set(0,0,0);
+  scene.add(new THREE.AmbientLight(0xffffff,0.78));
+  var d=new THREE.DirectionalLight(0xffffff,0.68); d.position.set(120,200,80); scene.add(d);
+  var d2=new THREE.DirectionalLight(0xffffff,0.32); d2.position.set(-100,120,-120); scene.add(d2);
+  var grid=new THREE.GridHelper(600,30,0xe4e8ec,0xeef1f4); grid.position.y=-2; scene.add(grid);
+  var sel=document.getElementById('sel');
+  Object.keys(PROFILES).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+  sel.onchange=function(){build(sel.value);};
+  document.getElementById('ex').oninput=function(e){EX=+e.target.value;document.getElementById('exv').textContent=EX;build(sel.value);};
+  document.getElementById('exv').textContent=EX;
+  var _q=new URLSearchParams(location.search).get('c');var _k=(_q&&PROFILES[_q])?_q:Object.keys(PROFILES)[0];sel.value=_k;build(_k); animate();
+}
+function resample(points,N){
+  var p=points.slice().sort(function(a,b){return a[0]-b[0];});
+  var d0=p[0][0],d1=p[p.length-1][0],out=[];
+  for(var i=0;i<N;i++){var d=d0+(d1-d0)*i/(N-1),j=0;while(j<p.length-1&&p[j+1][0]<d)j++;
+    var a=p[j],b=p[Math.min(j+1,p.length-1)],t=(b[0]===a[0])?0:(d-a[0])/(b[0]-a[0]);out.push([d,a[1]+(b[1]-a[1])*t]);}
+  return out;
+}
+function badge(x,y,z,letter,color){
+  var cvs=document.createElement('canvas');cvs.width=cvs.height=128;var g=cvs.getContext('2d');
+  g.beginPath();g.arc(64,64,52,0,Math.PI*2);g.fillStyle=color;g.fill();g.lineWidth=9;g.strokeStyle='#fff';g.stroke();
+  g.fillStyle='#fff';g.font='bold 76px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(letter,64,72);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cvs),depthTest:false}));
+  sp.position.set(x,y+15,z);sp.scale.set(20,20,1);trackGroup.add(sp);
+}
+function build(key){
+  var pr=PROFILES[key],isDirt=pr.surface==='ダート';
+  document.getElementById('meta').textContent=(isDirt?'ダート':'芝')+'／高低差 '+pr.kotei+'m ／ 直線 '+Math.round(pr.straight)+'m（JRA公式）';
+  document.getElementById('meta').style.color=isDirt?'#8a5a2b':'#2f7d2b';
+  if(trackGroup) scene.remove(trackGroup);
+  trackGroup=new THREE.Group();
+  var N=160,rs=resample(pr.points,N),a=150,b=98,W=13,vpos=[],idx=[],cols=[];
+  var emin=1e9,emax=-1e9;rs.forEach(function(q){emin=Math.min(emin,q[1]);emax=Math.max(emax,q[1]);});
+  var c1=new THREE.Color(isDirt?0xd9c199:0x9fd18f),c2=new THREE.Color(isDirt?0x6f4620:0x256321);
+  for(var i=0;i<N;i++){
+    var frac=i/(N-1),th=Math.PI*1.5-frac*Math.PI*2,cx=Math.cos(th)*a,cz=Math.sin(th)*b;
+    var dth=0.001,nx=Math.cos(th+dth)*a-cx,nz=Math.sin(th+dth)*b-cz,L=Math.hypot(nx,nz)||1,px=-nz/L,pz=nx/L,y=rs[i][1]*EX;
+    vpos.push(cx+px*W,y,cz+pz*W);vpos.push(cx-px*W,y,cz-pz*W);
+    var t=(emax>emin)?(rs[i][1]-emin)/(emax-emin):0,c=c1.clone().lerp(c2,t);
+    cols.push(c.r,c.g,c.b);cols.push(c.r,c.g,c.b);
+  }
+  for(var i=0;i<N-1;i++){var o=i*2;idx.push(o,o+1,o+2,o+1,o+3,o+2);}
+  var g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(vpos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  g.setIndex(idx);g.computeVertexNormals();
+  trackGroup.add(new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.9,metalness:0.0})));
+  var lp=[];for(var i=0;i<N;i++){var o=i*2;lp.push(new THREE.Vector3((vpos[o*3]+vpos[o*3+3])/2,vpos[o*3+1]+0.4,(vpos[o*3+2]+vpos[o*3+5])/2));}
+  trackGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(lp),new THREE.LineBasicMaterial({color:0xffffff})));
+  function at(i){var o=i*2*3;return [(vpos[o]+vpos[o+3])/2,vpos[o+1],(vpos[o+2]+vpos[o+5])/2];}
+  var s=at(0),gg=at(N-1); badge(s[0],s[1],s[2],'S','#2f7d2b'); badge(gg[0],gg[1],gg[2],'G','#e5811f');
+  scene.add(trackGroup);
+}
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}
+addEventListener('resize',function(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+init();
+</script></body></html>
