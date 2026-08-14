@@ -22,7 +22,7 @@ body{background:#eef2f5;font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',Meir
   <select id="sel"></select>
   <label>高低の強調 <span id="exv"></span>x</label>
   <input type="range" id="ex" min="4" max="26" step="1" value="13">
-  <div class="lg"><span><i style="background:#4f8a34"></i>芝</span><span><i style="background:#c08a4a"></i>ダート</span><span><i style="background:#2f7d2b;border-radius:50%"></i>S</span><span><i style="background:#e5811f;border-radius:50%"></i>G</span></div>
+  <div class="lg"><span><i style="background:#4f8a34"></i>芝</span><span><i style="background:#c08a4a"></i>ダート</span><span><i style="background:#e5811f;border-radius:50%"></i>Gゴール</span></div>
   <div class="tip">指でドラッグ＝回転／2本指ピンチ＝ズーム（PCはドラッグ回転・ホイールズーム）。高低は強調表示。JRA公式データに基づく／HATAKE独自作図。</div>
 </div>
 <canvas id="cv"></canvas>
@@ -104,11 +104,11 @@ function build(venue){
   group.add(ellipseMesh(120,77,baseY+2,0xbfe0a8));
   // S/G(芝の周回上に)
   var ref=vd['芝']||vd['ダート'];
-  var pd=ref.points.slice().sort(function(a,b){return b[0]-a[0];}); // desc:[0]=発走
-  var eS=baseY+pd[0][1]*EX+6, eG=baseY+pd[pd.length-1][1]*EX+6;
+  var pd=ref.points.slice().sort(function(a,b){return b[0]-a[0];}); // desc:[last]=ゴール
+  var eG=baseY+pd[pd.length-1][1]*EX+6;
   var oa=vd['芝']?178:146, ob=vd['芝']?116:95, ia=vd['芝']?150:124, ib=vd['芝']?98:80;
-  var S=midTop(oa,ob,ia,ib,0,eS), G=midTop(oa,ob,ia,ib,1,eG);
-  badge(S[0],S[1],S[2],'S','#2f7d2b'); badge(G[0],G[1],G[2],'G','#e5811f');
+  var G=midTop(oa,ob,ia,ib,1,eG);
+  badge(G[0],G[1],G[2],'G','#e5811f');   // スタートは距離で変わるためGのみ
   scene.add(group);
 }
 function init(){
