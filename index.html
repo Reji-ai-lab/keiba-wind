@@ -106,6 +106,9 @@ src:url(data:font/woff2;base64,d09GMgABAAAAANoIABMAAAACHtgAANmjAAEPGgAAAAAAAAAAA
   .k .dt{font-size:9.5px;color:var(--ink3);margin-top:2px;letter-spacing:.02em;}
   .none{color:var(--ink3);font-size:11px;font-weight:400;}
   .ft{margin-top:20px;padding-top:12px;border-top:1px solid var(--line);color:var(--ink3);font-size:9.5px;line-height:1.9;text-align:center;}
+  .sfc{display:flex;gap:6px;margin:8px 0 2px;}
+  .sfc button{flex:1;font:inherit;font-size:12px;font-weight:800;padding:6px 0;border-radius:8px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink3);}
+  .sfc button.on{background:var(--green);color:#fff;border-color:var(--green);}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -126,6 +129,7 @@ src:url(data:font/woff2;base64,d09GMgABAAAAANoIABMAAAACHtgAANmjAAEPGgAAAAAAAAAAA
   <div class="sec wind">
     <div class="sec-t">今日の風・馬場</div>
     <div class="cinfo"><b id="cTitle">中山競馬場</b>　<span id="cSub"></span></div>
+    <div class="sfc" id="sfcTog"><button data-s="芝" class="on">芝</button><button data-s="ダート">ダート</button></div>
     <div class="rose"><canvas id="rose"></canvas>
       <div class="readout"><div class="big" id="wLabel">—</div><div class="s tn" id="wSpd"></div></div></div>
     <div class="ctrls">
@@ -133,7 +137,7 @@ src:url(data:font/woff2;base64,d09GMgABAAAAANoIABMAAAACHtgAANmjAAEPGgAAAAAAAAAAA
         <select id="wdir"><option value="0">北</option><option value="45">北東</option><option value="90">東</option><option value="135">南東</option><option value="180">南</option><option value="225">南西</option><option value="270">西</option><option value="315">北西</option></select></div>
       <div><label>風速<span class="rv tn" id="wspdV">5 m/s</span></label><input type="range" id="wspd" min="0" max="12" step="1" value="5"></div>
       <div><label>馬場状態</label><select id="going"><option value="0">良</option><option value="1">稍重</option><option value="2">重</option><option value="3">不良</option></select></div>
-      <div><label>クッション値<span class="rv tn" id="cushV">9.7</span></label><input type="range" id="cush" min="6" max="12" step="0.1" value="9.7"></div>
+      <div id="cushRow"><label>クッション値<span class="rv tn" id="cushV">9.7</span></label><input type="range" id="cush" min="6" max="12" step="0.1" value="9.7"></div>
     </div>
   </div>
   <div class="rcol">
@@ -161,24 +165,13 @@ src:url(data:font/woff2;base64,d09GMgABAAAAANoIABMAAAACHtgAANmjAAEPGgAAAAAAAAAAA
 <script>
 const TURN_L=[4,5,7];
 const SL={1:266,2:262,3:292,4:659,5:526,6:310,7:412,8:404,9:474,10:293};
-const K={
- 1:{n:"札幌",br:0,r:1006,f:[0,5,0],ws:[-2.4,1.0,649,811],wd:[-2.5,1.2,672,767],gs:[-1.0,0.6,1098,2620],gd:[-0.3,0.2,1052,2754],cm:7.5,cs:[-0.4,0.1,276,253],cd:[-0.0,0.0,305,242]},
- 2:{n:"函館",br:135,r:864,f:[19,1,9],ws:null,wd:[3.7,2.8,1668,1944],gs:[1.1,0.6,896,2185],gd:[-1.5,1.0,856,2383],cm:7.4,cs:null,cd:[2.9,0.5,137,85]},
- 3:{n:"福島",br:45,r:1344,f:[0,1,12],ws:[0.8,0.2,234,493],wd:[2.0,2.0,2868,2616],gs:[2.0,1.2,1065,4029],gd:[0.1,0.1,1474,5007],cm:8.8,cs:[-3.2,0.8,221,350],cd:[0.4,0.1,252,576]},
- 4:{n:"新潟",br:250,r:1989,f:[20,6,30],ws:[3.5,2.0,1354,1435],wd:[0.2,0.4,6994,6079],gs:[1.6,1.3,1867,5035],gd:[1.4,1.6,2573,6442],cm:9.3,cs:[1.6,0.4,256,229],cd:[-1.0,0.4,369,338]},
- 5:{n:"東京",br:280,r:3306,f:[1,0,17],ws:[2.2,0.7,306,555],wd:[-0.9,1.9,9992,10241],gs:[0.9,1.0,2945,9167],gd:[0.9,1.4,4214,11621],cm:9.3,cs:[-0.1,0.0,153,476],cd:[1.3,0.5,230,630]},
- 6:{n:"中山",br:15,r:3252,f:[9,10,8],ws:[0.9,0.7,2487,2063],wd:[1.1,1.4,4359,4315],gs:[1.8,2.0,3737,8389],gd:[-0.5,0.8,5193,10924],cm:9.7,cs:[0.2,0.1,678,1161],cd:[-2.8,1.8,1014,1299]},
- 7:{n:"中京",br:225,r:2556,f:[1,0,29],ws:[-5.3,1.2,1255,102],wd:[-0.2,0.4,7476,6665],gs:[1.2,1.2,2406,6562],gd:[-0.4,0.5,3164,8277],cm:9.7,cs:[2.3,1.0,790,888],cd:[-0.7,0.4,975,1057]},
- 8:{n:"京都",br:60,r:2159,f:[0,8,7],ws:[1.5,0.6,424,2002],wd:[2.2,2.2,3073,2568],gs:[2.1,2.0,2704,6540],gd:[-0.8,1.0,2771,6559],cm:9.8,cs:[-1.2,0.4,627,365],cd:[2.8,1.2,579,367]},
- 9:{n:"阪神",br:315,r:3216,f:[5,0,4],ws:[-3.2,0.9,2066,153],wd:[0.3,0.5,5596,5418],gs:[0.5,0.5,3318,8227],gd:[-1.3,2.0,4029,9760],cm:9.5,cs:[0.6,0.2,508,980],cd:[1.6,0.8,681,978]},
- 10:{n:"小倉",br:180,r:1895,f:[1,3,16],ws:[3.6,1.1,253,913],wd:[0.3,0.4,4349,4576],gs:[0.4,0.3,3025,4109],gd:[-1.1,1.3,3557,4939],cm:9.1,cs:[-0.7,0.2,465,331],cd:[3.6,1.7,641,482]}
-};
+/*K_START*/const K={"1":{"n":"札幌","br":0,"芝":{"r":593,"f":[0,5,0],"ws":[-1.8,0.6,406,502],"wd":[-2.7,1.0,425,461],"gs":[-1.6,0.7,623,1597],"gd":[-3.0,1.6,623,1738],"cm":7.5,"cs":[-0.4,0.1,276,253],"cd":[-0.0,0.0,305,242]},"ダート":{"r":413,"f":[0,6,0],"ws":[-3.4,0.8,243,309],"wd":[-2.3,0.7,247,306],"gs":[-0.3,0.1,475,1023],"gd":[4.0,1.8,429,1016],"cm":null,"cs":null,"cd":null}},"2":{"n":"函館","br":135,"芝":{"r":509,"f":[19,1,9],"ws":null,"wd":[4.2,2.6,1097,1229],"gs":[0.2,0.1,436,1404],"gd":[-1.9,0.9,462,1608],"cm":7.4,"cs":null,"cd":[2.9,0.5,137,85]},"ダート":{"r":355,"f":[20,0,10],"ws":null,"wd":[2.6,1.2,571,715],"gs":[-0.2,0.1,460,781],"gd":[-1.3,0.5,394,775],"cm":null,"cs":null,"cd":null}},"3":{"n":"福島","br":45,"芝":{"r":696,"f":[0,1,12],"ws":[0.1,0.0,154,250],"wd":[1.4,1.1,1594,1468],"gs":[3.7,1.5,437,2243],"gd":[0.5,0.3,617,2841],"cm":8.8,"cs":[-3.2,0.8,221,350],"cd":[0.4,0.1,252,576]},"ダート":{"r":538,"f":[0,0,12],"ws":null,"wd":[1.7,1.1,1108,1029],"gs":[-0.4,0.2,529,1437],"gd":[0.1,0.1,775,1879],"cm":null,"cs":null,"cd":null}},"4":{"n":"新潟","br":250,"芝":{"r":997,"f":[19,6,31],"ws":[2.5,1.2,795,853],"wd":[0.6,0.8,3968,3396],"gs":[1.0,0.6,757,2774],"gd":[1.9,1.5,1139,3656],"cm":9.3,"cs":[1.6,0.4,256,229],"cd":[-1.0,0.4,369,338]},"ダート":{"r":844,"f":[21,6,30],"ws":[5.1,1.7,428,511],"wd":[-0.6,0.6,2619,2322],"gs":[0.7,0.4,961,1856],"gd":[0.9,0.7,1298,2419],"cm":null,"cs":null,"cd":null}},"5":{"n":"東京","br":280,"芝":{"r":1595,"f":[1,0,17],"ws":[3.2,0.8,166,337],"wd":[-1.1,1.6,5200,5451],"gs":[2.6,1.5,760,5137],"gd":[2.4,1.9,957,5840],"cm":9.3,"cs":[-0.1,0.0,153,476],"cd":[1.3,0.5,230,630]},"ダート":{"r":1658,"f":[1,0,17],"ws":[0.3,0.1,131,201],"wd":[-0.8,1.1,4688,4669],"gs":[-0.4,0.3,2128,3876],"gd":[0.5,0.7,3207,5656],"cm":null,"cs":null,"cd":null}},"6":{"n":"中山","br":15,"芝":{"r":1356,"f":[10,12,8],"ws":[0.1,0.0,1195,1128],"wd":[2.5,2.2,2036,2022],"gs":[-0.6,0.4,1241,4092],"gd":[-0.2,0.2,1515,4835],"cm":9.7,"cs":[0.2,0.1,678,1161],"cd":[-2.8,1.8,1014,1299]},"ダート":{"r":1784,"f":[9,9,9],"ws":[2.5,1.2,1215,861],"wd":[-0.1,0.1,2232,2218],"gs":[3.1,2.7,2382,3975],"gd":[-0.6,0.8,3571,5820],"cm":null,"cs":null,"cd":null}},"7":{"n":"中京","br":225,"芝":{"r":1114,"f":[1,0,30],"ws":null,"wd":[-1.3,1.5,3557,3111],"gs":[-1.2,0.7,878,3159],"gd":[0.0,0.0,1028,3788],"cm":9.7,"cs":[2.3,1.0,790,888],"cd":[-0.7,0.4,975,1057]},"ダート":{"r":1389,"f":[1,0,28],"ws":null,"wd":[0.6,0.7,3775,3432],"gs":[2.9,2.1,1489,3246],"gd":[-0.3,0.3,2101,4350],"cm":null,"cs":null,"cd":null}},"8":{"n":"京都","br":60,"芝":{"r":977,"f":[0,8,7],"ws":[4.0,1.1,186,1050],"wd":[3.6,2.5,1473,1203],"gs":[0.9,0.6,970,3204],"gd":[-2.3,1.7,920,3070],"cm":9.8,"cs":[-1.2,0.4,627,365],"cd":[2.8,1.2,579,367]},"ダート":{"r":1135,"f":[0,9,6],"ws":[-0.3,0.1,229,903],"wd":[1.3,0.9,1514,1308],"gs":[2.5,1.8,1693,3181],"gd":[0.2,0.2,1821,3371],"cm":null,"cs":null,"cd":null}},"9":{"n":"阪神","br":315,"芝":{"r":1382,"f":[5,0,4],"ws":null,"wd":[-1.2,1.2,2728,2632],"gs":[2.0,1.3,1081,4027],"gd":[-1.1,0.9,1204,4408],"cm":9.5,"cs":[0.6,0.2,508,980],"cd":[1.6,0.8,681,978]},"ダート":{"r":1741,"f":[5,0,4],"ws":null,"wd":[2.0,2.0,2714,2651],"gs":[-1.1,0.9,2165,3941],"gd":[-0.3,0.4,2758,5123],"cm":null,"cs":null,"cd":null}},"10":{"n":"小倉","br":180,"芝":{"r":1079,"f":[1,3,16],"ws":[2.4,0.6,136,568],"wd":[0.9,0.9,2750,2894],"gs":[1.1,0.8,1537,2554],"gd":[-2.9,2.8,1835,3170],"cm":9.1,"cs":[-0.7,0.2,465,331],"cd":[3.6,1.7,641,482]},"ダート":{"r":650,"f":[1,2,16],"ws":[5.8,0.9,84,263],"wd":[-0.8,0.5,1256,1288],"gs":[-2.1,1.1,1236,1154],"gd":[0.7,0.5,1532,1452],"cm":null,"cs":null,"cd":null}}};/*K_END*/
 const rad=d=>d*Math.PI/180, sgn=x=>x>0?1:x<0?-1:0;
 const jp=b=>["北","北東","東","南東","南","南西","西","北西"][Math.round(b/45)%8];
 const mark=z=>z>=2?["◎","m3"]:z>=1?["○","m2"]:["△","m1"];
 const mk=e=>{const[l,c]=mark(e[1]);return `<span class="mk ${c}">${l}</span>`;};
 const css=v=>getComputedStyle(document.body).getPropertyValue(v).trim();
-let cur=6;
+let cur=6, surf="芝";
 
 const rail=document.getElementById("rail");
 Object.entries(K).forEach(([id,k])=>{
@@ -243,43 +236,44 @@ function frLine(lab,e,fn){
 }
 function render(){
   document.querySelectorAll(".ct").forEach(t=>t.classList.toggle("on",+t.dataset.id===cur));
-  const k=K[cur];
+  const k=K[cur], S=k[surf];
   cTitle.textContent=k.n+"競馬場";
-  cSub.textContent=`直線 ${jp(k.br)}向き ／ ${k.r.toLocaleString()}レース分析`;
+  cSub.textContent=`${surf}｜直線 ${jp(k.br)}向き ／ ${S.r.toLocaleString()}レース分析`;
+  const dcush=surf==="ダート"?"ダート":"芝";
   const sV=e=>({t:e[0]>0?"向かい風で前残り":"追い風で前残り",c:e[0]>0?"var(--front)":"var(--back)"});
   const dV=e=>({t:e[0]>0?"風で有利な枠が来る":"効きは弱い／逆",c:e[0]>0?"var(--green)":"var(--ink3)"});
   const gS=e=>({t:e[0]>0?"道悪で前残り":"道悪で差し台頭",c:e[0]>0?"var(--front)":"var(--back)"});
   const gD=e=>({t:e[0]>0?"道悪で内枠有利":"道悪で外差し",c:"var(--ink)"});
   const cS=e=>({t:e[0]>0?"硬い芝で前残り":"硬い芝で差し台頭",c:e[0]>0?"var(--front)":"var(--back)"});
   const cD=e=>({t:e[0]>0?"硬い芝で内枠有利":"硬い芝で外有利",c:"var(--ink)"});
-  const _f=[[k.ws,sV],[k.wd,dV],[k.gs,gS],[k.gd,gD],[k.cs,cS],[k.cd,cD]];
+  const _f=[[S.ws,sV],[S.wd,dV],[S.gs,gS],[S.gd,gD],[S.cs,cS],[S.cd,cD]];
   const _p=_f.filter(f=>f[0]&&Math.abs(f[0][0])>=0.5).sort((a,b)=>b[0][1]-a[0][1]||Math.abs(b[0][0])-Math.abs(a[0][0]));
-  points.innerHTML=_p.length?_p.map(f=>`<div class="pt"><span style="color:var(--green)">▸</span><span>${f[1](f[0]).t} ${mk(f[0])}</span></div>`).join(""):`<div class="empty">この会場は、目立った偏りが少なめです。</div>`;
+  points.innerHTML=_p.length?_p.map(f=>`<div class="pt"><span style="color:var(--green)">▸</span><span>${f[1](f[0]).t} ${mk(f[0])}</span></div>`).join(""):`<div class="empty">この面は、目立った偏りが少なめです。</div>`;
   cstat.innerHTML=`<div class="cell"><div class="cl">回り</div><div class="cv">${TURN_L.includes(cur)?"左":"右"}</div></div>`
     +`<div class="cell"><div class="cl">直線</div><div class="cv">${SL[cur]}<small>m</small></div></div>`
-    +`<div class="cell"><div class="cl">芝ｸｯｼｮﾝ中央</div><div class="cv">${k.cm}</div></div>`;
-  cwind.innerHTML=`強風日の割合｜向かい <b>${k.f[0]}%</b>・追い <b>${k.f[1]}%</b>・横 <b>${k.f[2]}%</b>`;
+    +(S.cm!=null?`<div class="cell"><div class="cl">芝ｸｯｼｮﾝ中央</div><div class="cv">${S.cm}</div></div>`:"");
+  cwind.innerHTML=`強風日の割合｜向かい <b>${S.f[0]}%</b>・追い <b>${S.f[1]}%</b>・横 <b>${S.f[2]}%</b>`;
   drawRose();advise();
 }
 function advise(){
-  const k=K[cur],wd=+wdirEl.value,sp=+wspdEl.value,going=+goingEl.value,cush=+cushEl.value;
+  const k=K[cur],S=k[surf],wd=+wdirEl.value,sp=+wspdEl.value,going=+goingEl.value,cush=+cushEl.value;
   const to=(wd+180)%360,along=sp*Math.cos(rad(to-k.br)),cross=sp*Math.sin(rad(to-k.br));
   const turn=TURN_L.includes(cur)?1:-1,co=cross*turn;
   let wl="横風";if(sp<1)wl="ほぼ無風";else if(Math.abs(along)>=Math.abs(cross))wl=along>0?"追い風":"向かい風";
   wLabel.textContent=wl;wLabel.style.color=sp<1?"var(--ink2)":(wl==="横風"?"var(--wind)":wl==="向かい風"?"var(--back)":"var(--front)");
   wSpd.textContent=sp>0?`${jp(wd)}より ${sp} m/s`:"無風";
   let mS=0,mD=0;const C=[],wg=e=>Math.min(e[1],2)/2;
-  if(Math.abs(along)>=1.5&&Math.abs(along)>Math.abs(cross)&&k.ws){
-    const v=(along<0?1:-1)*k.ws[0]*Math.min(Math.abs(along)/3,1);mS+=v*wg(k.ws);
-    C.push([v,`${along<0?"向かい":"追い"}風 ${Math.abs(along).toFixed(1)}m → ${v>0?"前づけ":"差し"}やや有利`,mark(k.ws[1])]);}
-  if(Math.abs(co)>=1.5&&k.wd){const v=-sgn(co)*k.wd[0]*Math.min(Math.abs(co)/3,1);mD+=v*wg(k.wd);
-    C.push([v,`横風が${co<0?"内":"外"}へ ${Math.abs(co).toFixed(1)}m → ${v>0?"外":"内"}枠やや有利`,mark(k.wd[1])]);}
-  if(going>=1){if(k.gs){mS+=k.gs[0]*wg(k.gs);C.push([k.gs[0],`道悪 → ${k.gs[0]>0?"前づけ":"差し"}有利`,mark(k.gs[1])]);}
-    if(k.gd){mD+=-k.gd[0]*wg(k.gd);C.push([-k.gd[0],`道悪 → ${k.gd[0]>0?"内":"外"}枠有利`,mark(k.gd[1])]);}}
-  const dev=cush-k.cm;
+  if(Math.abs(along)>=1.5&&Math.abs(along)>Math.abs(cross)&&S.ws){
+    const v=(along<0?1:-1)*S.ws[0]*Math.min(Math.abs(along)/3,1);mS+=v*wg(S.ws);
+    C.push([v,`${along<0?"向かい":"追い"}風 ${Math.abs(along).toFixed(1)}m → ${v>0?"前づけ":"差し"}やや有利`,mark(S.ws[1])]);}
+  if(Math.abs(co)>=1.5&&S.wd){const v=-sgn(co)*S.wd[0]*Math.min(Math.abs(co)/3,1);mD+=v*wg(S.wd);
+    C.push([v,`横風が${co<0?"内":"外"}へ ${Math.abs(co).toFixed(1)}m → ${v>0?"外":"内"}枠やや有利`,mark(S.wd[1])]);}
+  if(going>=1){if(S.gs){mS+=S.gs[0]*wg(S.gs);C.push([S.gs[0],`道悪 → ${S.gs[0]>0?"前づけ":"差し"}有利`,mark(S.gs[1])]);}
+    if(S.gd){mD+=-S.gd[0]*wg(S.gd);C.push([-S.gd[0],`道悪 → ${S.gd[0]>0?"内":"外"}枠有利`,mark(S.gd[1])]);}}
+  if(surf==="芝"&&S.cm!=null){const dev=cush-S.cm;
   if(Math.abs(dev)>=0.4){const h=dev>0?1:-1;
-    if(k.cs){const v=h*k.cs[0];mS+=v*wg(k.cs);C.push([v,`${h>0?"硬い":"軟らかい"}芝 → ${v>0?"前づけ":"差し"}有利`,mark(k.cs[1])]);}
-    if(k.cd){const v=-h*k.cd[0];mD+=v*wg(k.cd);C.push([v,`${h>0?"硬い":"軟らかい"}芝 → ${v>0?"外":"内"}枠有利`,mark(k.cd[1])]);}}
+    if(S.cs){const v=h*S.cs[0];mS+=v*wg(S.cs);C.push([v,`${h>0?"硬い":"軟らかい"}芝 → ${v>0?"前づけ":"差し"}有利`,mark(S.cs[1])]);}
+    if(S.cd){const v=-h*S.cd[0];mD+=v*wg(S.cd);C.push([v,`${h>0?"硬い":"軟らかい"}芝 → ${v>0?"外":"内"}枠有利`,mark(S.cd[1])]);}}}
   pos("knS",mS);pos("knD",mD);
   const st=verb(mS,"逃げ・先行","差し・追込"),dt=verb(mD,"外枠","内枠");
   let html=`<div class="big">脚質は<b>${st}</b> ／ 枠は<b>${dt}</b></div>`;
@@ -293,7 +287,11 @@ function pos(id,m){document.getElementById(id).style.left=(50+Math.max(-44,Math.
 
 const wdirEl=document.getElementById("wdir"),wspdEl=document.getElementById("wspd"),
   goingEl=document.getElementById("going"),cushEl=document.getElementById("cush");
-function syncCush(){cushEl.value=K[cur].cm;cushV.textContent=(+K[cur].cm).toFixed(1);}
+function syncCush(){const cm=K[cur][surf].cm;if(cm!=null){cushEl.value=cm;cushV.textContent=(+cm).toFixed(1);}
+  document.getElementById("cushRow").style.display=(surf==="芝")?"":"none";}
+document.querySelectorAll("#sfcTog button").forEach(b=>b.onclick=()=>{
+  surf=b.dataset.s;document.querySelectorAll("#sfcTog button").forEach(x=>x.classList.toggle("on",x===b));
+  syncCush();render();});
 wspdEl.oninput=e=>{wspdV.textContent=e.target.value+" m/s";drawRose();advise();};
 cushEl.oninput=e=>{cushV.textContent=(+e.target.value).toFixed(1);advise();};
 wdirEl.onchange=()=>{wdirV.textContent=jp(+wdirEl.value);drawRose();advise();};
